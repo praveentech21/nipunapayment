@@ -18,6 +18,7 @@ if (isset($_POST['registration'])) {
     $Location = $_POST['Location'];
     $selectedevent0 = $_POST['selectedevent0'];
     $selectedevent1 = $_POST['selectedevent1'];
+    $paymentid = $_POST['payment_id'];
 
     function generateRandomOrderId($con, $length = 10)
     {
@@ -54,88 +55,22 @@ if (isset($_POST['registration'])) {
     }
 
     $orderId = generateRandomOrderId($conn);
-    $paymentid = 'failed';
-    $amount_topay = $amount * 100;
 
-    $apiKey = '099eb0cd-02cf-4e2a-8aca-3e6c6aff0399';
-    $merchantId = 'PGTESTPAYUAT';
-    $saltIndex = '1';
+    $sql = "INSERT INTO `registration`(`studentid`, `name`, `email`, `mobile`, `amount`, `college`, `Course`, `year`, `Location`, `selectedevent0`, `selectedevent1`, `Paymentid`, `orderid`) VALUES ('$regno','$name','$email','$mobile','$amount','$college','$branch','$year','$Location','$selectedevent0','$selectedevent1','$paymentid','$orderId')";
 
-    // Prepare the payment request data (you should customize this)
-    $paymentData = array(
-        'merchantId' => $merchantId,
-        'merchantTransactionId' => $orderId,
-        "merchantUserId" => $regno,
-        'amount' => $amount_topay, // Amount in paisa (10 INR)
-        'redirectUrl' => "http://saipraveen.free.nf/nipuna/paymentsucess.php",
-        'redirectMode' => "POST",
-        'callbackUrl' => "http://saipraveen.free.nf/nipuna/paymentsucess.php",
-        "merchantOrderId" => $orderId,
-        "mobileNumber" => $mobile,
-        "message" => "Nipuna 2K24 Payment Gateway",
-        "email" => $email,
-        "shortName" => $name,
-        "paymentInstrument" => array(
-            "type" => "PAY_PAGE",
-        )
-    );
-
-
-    $jsonencode = json_encode($paymentData);
-    $payloadMain = base64_encode($jsonencode);
-
-    $payload = $payloadMain . "/pg/v1/pay" . $apiKey;
-    $sha256 = hash("sha256", $payload);
-    $final_x_header = $sha256 . '###' . $saltIndex;
-    $request = json_encode(array('request' => $payloadMain));
-
-    $curl = curl_init();
-    curl_setopt_array($curl, [
-        CURLOPT_URL => "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay",
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_ENCODING => "",
-        CURLOPT_MAXREDIRS => 10,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-        CURLOPT_CUSTOMREQUEST => "POST",
-        CURLOPT_POSTFIELDS => $request,
-        CURLOPT_HTTPHEADER => [
-            "Content-Type: application/json",
-            "X-VERIFY: " . $final_x_header,
-            "accept: application/json"
-        ],
-    ]);
-
-    $response = curl_exec($curl);
-    $err = curl_error($curl);
-
-    curl_close($curl);
-
-    if ($err) {
-        echo "cURL Error #:" . $err;
+    if (mysqli_query($conn, $sql)) {
+        $response = array(
+            "success" => true,
+            "message" => "Registration successful. Your order ID is " . $orderId . ". Please keep this for future reference.",
+            "orderId" => $orderId
+        );
     } else {
-        $res = json_decode($response);
-
-        echo "<pre>";
-        print_r($res);
-        echo "</pre>";
-
-        if (isset($res->success) && $res->success == '1') {
-            $paymentCode = $res->code;
-            $paymentMsg = $res->message;
-            $payUrl = $res->data->instrumentResponse->redirectInfo->url;
-
-            header('Location:' . $payUrl);
-        }
+        $response = array(
+            "success" => false,
+            "message" => "Error: " . mysqli_error($conn)
+        );
     }
-
-
-
-    $sql = "INSERT INTO `registration`(`studentid`, `name`, `email`, `mobile`, `amount`, `college`, `Course`, `year`, `Location`, `selectedevent0`, `selectedevent1`, `Paymentid`, `orderid`) VALUES ('$regno','$name','$email','$mobile','$amount','$college','$branch','$year','$Location','$selectedevent0','$selectedevent1','0','0')";
-
-    if ($conn->query($sql) === TRUE) {
-        echo "New record created successfully";
-    } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
-    }
+    echo json_encode($response);
+} else {
+    echo "Invalid request";
 }

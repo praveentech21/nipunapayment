@@ -530,6 +530,8 @@
     </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 
 
     <script>
@@ -539,8 +541,8 @@
             var count = 0;
             checkboxes.forEach(function(checkbox) {
                 total += parseInt(checkbox.getAttribute('data-price'));
-                if(count == 0)document.getElementById('selectedevent0').value = checkbox.id;
-                else if(count == 1) document.getElementById('selectedevent1').value = checkbox.id;
+                if (count == 0) document.getElementById('selectedevent0').value = checkbox.id;
+                else if (count == 1) document.getElementById('selectedevent1').value = checkbox.id;
                 count++;
 
                 if (count > 2) {
@@ -572,37 +574,65 @@
                 alert('Please select at least one event to register');
                 return;
             }
-            
 
-            $.ajax({
-                url: 'registration.php',
-                type: 'post',
-                data: {
-                    "registration": "registration",
-                    'price': cartTotalPrice,
-                    "name": name,
-                    "regno": regno,
-                    "email": email,
-                    "mobileNumber": phone,
-                    "College": College,
-                    "Year": Year,
-                    "Course": Course,
-                    "Location": Location,
-                    "selectedevent0": selectedevent0,
-                    "selectedevent1": selectedevent1
+            var cart_amount = cartTotalPrice * 100;
+
+            var options = {
+                "key": "rzp_live_2D4bAGktbYxm16",
+                "amount": cart_amount, // Amount in paise
+                "currency": "INR",
+                "name": "NIPUNA 2K24",
+                "description": regno,
+                "handler": function(response) {
+                    console.log(response.razorpay_payment_id);
+                    if (response.razorpay_payment_id != '') {
+                        // alert("Payment Successful");
+                        console.log(response.razorpay_payment_id);
+                        $.ajax({
+                            url: 'registration.php',
+                            type: 'post',
+                            data: {
+                                "registration": "registration",
+                                'price': cartTotalPrice,
+                                "name": name,
+                                "regno": regno,
+                                "email": email,
+                                "mobileNumber": phone,
+                                "College": College,
+                                "Year": Year,
+                                "Course": Course,
+                                "Location": Location,
+                                "selectedevent0": selectedevent0,
+                                "selectedevent1": selectedevent1,
+                                "payment_id": response.razorpay_payment_id
+                            },
+                            success: function(response) {
+                               $data = JSON.parse(response);
+                                if ($data.success) {
+                                    alert($data.message);
+                                    console.log($data.orderId);
+                                } else {
+                                    alert($data.message);
+                                }
+                                
+                            }
+                        });
+                    } else {
+                        alert("Payment Failed");
+                    }
                 },
-                success: function(response) {
-                    console.log(response);
-                    // if (response.success == 1) {
-                    //     var paymentCode = response.code;
-                    //     var paymentMsg = response.message;
-                    //     var payUrl = response.data.instrumentResponse.redirectInfo.url;
-                    //     window.location.href = payUrl;
-                    // }
+                "prefill": {
+                    "name": name,
+                    "email": email,
+                    "contact": phone
+                },
+                "theme": {
+                    "color": "#1e86f5"
                 }
-            });
+            };
+            var rzp = new Razorpay(options);
 
-
+            rzp.open();
         }
     </script>
 </body>
