@@ -568,6 +568,7 @@
             var Location = document.getElementById('Location').value;
             var selectedevent0 = document.getElementById('selectedevent0').value;
             var selectedevent1 = document.getElementById('selectedevent1').value;
+            var recharge_amount_to_pay = cartTotalPrice * 100;
 
 
             if (cartTotalPrice <= 0) {
@@ -575,7 +576,83 @@
                 return;
             }
 
-            var cart_amount = cartTotalPrice * 100;
+            $.ajax({
+                type: 'POST',
+                url: 'create_order.php',
+                data: {
+                    work: "create_order",
+                    orderAmount: recharge_amount_to_pay,
+                },
+                success: function(response) {
+                    console.log(response);
+
+                    var responseData = JSON.parse(response);
+                    var orderId = responseData.id;
+
+                    if (orderId == null) {
+                        alert('Recharge Initiate failed please try again later');
+                        //window.location.href = 'profile.php';
+                    } else {
+                        console.log('Order ID:', orderId);
+                        $.ajax({
+                            url: 'registration_nipuna.php',
+                            type: 'POST',
+                            data: {
+                                "registration": "registration",
+                                'price': cartTotalPrice,
+                                "name": name,
+                                "regno": regno,
+                                "email": email,
+                                "mobileNumber": phone,
+                                "College": College,
+                                "Year": Year,
+                                "Course": Course,
+                                "Location": Location,
+                                "selectedevent0": selectedevent0,
+                                "selectedevent1": selectedevent1,
+                                "orderId": orderId
+                            },
+                            success: function(response) {
+                                console.log(response);
+                                
+                            },
+                            error: function(xhr, status, error) {
+                                console.error('Error sending order details:', error);
+                                // Handle error response if needed
+                            }
+                        });
+                        var options = {
+                            "key": "rzp_test_bZFi6V3FyQ5lBT", // Enter the Key ID generated from the Dashboard
+                            "amount": recharge_amount_to_pay, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+                            "currency": "INR",
+                            "name": "Nipuna 2K24",
+                            "description": "Nipuna 2k24 registration",
+                            "image": "https://nipuna24.srkriste.in/Images/nipunalogo.png",
+                            "order_id": orderId, //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+                            "callback_url": "http://srkrcampusonline.rf.gd/registration_nipuna.php",
+                            "prefill": {
+                                "name": name,
+                                "email": email,
+                                "contact": phone
+                            },
+                            "notes": {
+                                "address": "Razorpay Corporate Office"
+                            },
+                            "theme": {
+                                "color": "#3399cc"
+                            }
+                        };
+                        var rzp = new Razorpay(options);
+
+                        rzp.open();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error sending order details:', error);
+                    // Handle error response if needed
+                }
+            });
+
 
             var options = {
                 "key": "rzp_test_ag4z4ezm2Nz4GN",
@@ -607,14 +684,14 @@
                                 "payment_id": response.razorpay_payment_id
                             },
                             success: function(response) {
-                               $data = JSON.parse(response);
+                                $data = JSON.parse(response);
                                 if ($data.success) {
                                     alert($data.message);
                                     console.log($data.orderId);
                                 } else {
                                     alert($data.message);
                                 }
-                                
+
                             }
                         });
                     } else {
