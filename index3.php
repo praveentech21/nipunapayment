@@ -578,18 +578,23 @@
             var cart_amount = cartTotalPrice * 100;
 
             var options = {
-                "key": "rzp_test_ag4z4ezm2Nz4GN",
-                "amount": cart_amount, // Amount in paise
+                "key": "rzp_live_2D4bAGktbYxm16",
+                "amount": 100, // Amount in paise
                 "currency": "INR",
                 "name": "NIPUNA 2K24",
                 "description": regno,
+                "image": "https://nipuna24.srkriste.in/Images/nipunalogo.png",
+                "callback_url": "http://saipraveen.free.nf/nipuna/index3.php",
+                "notes": {
+                    "address": "Razorpay Corporate Office"
+                },
                 "handler": function(response) {
                     console.log(response.razorpay_payment_id);
                     if (response.razorpay_payment_id != '') {
                         // alert("Payment Successful");
                         console.log(response.razorpay_payment_id);
                         $.ajax({
-                            url: 'registration.php',
+                            url: 'registration1.php',
                             type: 'post',
                             data: {
                                 "registration": "registration",
@@ -607,14 +612,14 @@
                                 "payment_id": response.razorpay_payment_id
                             },
                             success: function(response) {
-                               $data = JSON.parse(response);
+                                $data = JSON.parse(response);
                                 if ($data.success) {
                                     alert($data.message);
                                     console.log($data.orderId);
                                 } else {
                                     alert($data.message);
                                 }
-                                
+
                             }
                         });
                     } else {
@@ -633,6 +638,25 @@
             var rzp = new Razorpay(options);
 
             rzp.open();
+
+            rzp.on('payment.failed', function(response) {
+                alert(response.error.code);
+                alert(response.error.description);
+                alert(response.error.source);
+                alert(response.error.step);
+                alert(response.error.reason);
+                alert(response.error.metadata.order_id);
+                alert(response.error.metadata.payment_id);
+                console.log(response.error.code);
+                console.log(response.error.description);
+                console.log(response.error.source);
+                console.log(response.error.step);
+                console.log(response.error.reason);
+                console.log(response.error.metadata.order_id);
+                console.log(response.error.metadata.payment_id);
+
+            });
+
         }
     </script>
 </body>
