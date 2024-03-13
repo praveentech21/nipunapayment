@@ -1,7 +1,7 @@
 <?php
 
-// $conn = new mysqli('sql207.infinityfree.com', 'if0_35924919', 'srkrcampuscafe', 'if0_35924919_test');
-$conn = new mysqli('localhost', 'root', '', 'nipuna');
+$conn = new mysqli('sql104.infinityfree.com', 'if0_34588106', 'wFhJlEqTy7wak', 'if0_34588106_nipuna');
+// $conn = new mysqli('localhost', 'root', '', 'nipuna');
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
@@ -51,7 +51,7 @@ elseif (isset($_POST['razorpay_payment_id'])) {
 
         $api->utility->verifyPaymentSignature($attributes);
 
-        $sql1 = "UPDATE `registration` SET `Paymentid`='$paymentId' WHERE `orderid`='$orderId'";
+        $sql1 = "UPDATE `registration` SET `Paymentid`='$paymentId', `signature`='$signature' WHERE `orderid`='$orderId'";
 
         if (mysqli_query($conn, $sql1)) {
             $response = array(
@@ -66,6 +66,7 @@ elseif (isset($_POST['razorpay_payment_id'])) {
             );
         }
         echo json_encode($response);
+        header('Location: index.html');
 
         http_response_code(200);
     } catch (Exception $e) {
